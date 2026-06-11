@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontier Framework - Observability</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Frontier Framework</h1>
+            <div class="system-health">
+                <span class="status-indicator active"></span>
+                <span>System Health: Nominal</span>
+            </div>
+        </header>
+
+        <main class="grid-layout">
+            <!-- Organism Status Widget -->
+            <section class="widget organism-status">
+                <h2>Organism Status</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="label">Active Agents</span>
+                        <span class="value" id="active-agents">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Fitness Score</span>
+                        <span class="value" id="fitness-score">0.00</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Memory Usage</span>
+                        <span class="value" id="memory-usage">0 MB</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Mutation Count</span>
+                        <span class="value" id="mutation-count">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Genome Inspector -->
+            <section class="widget genome-inspector">
+                <h2>Current Genome</h2>
+                <div class="genome-details" id="genome-details">
+                    <!-- Genome details injected by JS -->
+                </div>
+            </section>
+
+            <!-- Swarm Visualization -->
+            <section class="widget swarm-vis">
+                <h2>Swarm Visualization</h2>
+                <canvas id="swarm-canvas"></canvas>
+            </section>
+
+            <!-- Event Feed -->
+            <section class="widget event-feed">
+                <h2>Real-Time Event Stream</h2>
+                <ul class="event-list" id="event-list">
+                    <!-- Events injected by JS -->
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/charts.js"></script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
