@@ -1,3 +1,5 @@
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/11b062cc-9d77-4a7a-8eb9-7000105acfda" />
+
 # Frontier Framework
 
 > *"The frontier model is not the destination — it's the first cell."*
