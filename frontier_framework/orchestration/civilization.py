@@ -23,6 +23,8 @@ from frontier_framework.evolution.genome import AgentCell, Genome, Specializatio
 from frontier_framework.memory.memory import DistributedMemory
 from frontier_framework.cognition.immune import ImmuneSystem
 from frontier_framework.cognition.knowledge import KnowledgeEcosystem
+from frontier_framework.biology.integration import BiologicalLifecycle
+from frontier_framework.simulation import SimulatedEnvironment
 
 
 @dataclass
@@ -122,6 +124,8 @@ class Civilization:
         self.collective_memory = DistributedMemory(max_entries=2000)
         self.event_log: list[dict] = []
         self.stats_history: list[dict] = []
+        self.biological_lifecycle = BiologicalLifecycle()
+        self.simulation = SimulatedEnvironment()
 
         # Spawn nodes
         domains = self.DOMAINS[:n_nodes]
@@ -294,10 +298,31 @@ class Civilization:
         }
         return stats
 
+    def biological_profile(self) -> dict:
+        """Expose the biological lifecycle mapped onto the civilization architecture."""
+        node_domains = [node.domain for node in self.nodes.values()]
+        return {
+            "lifecycle_stages": self.biological_lifecycle.stage_summary(),
+            "active_domains": node_domains,
+            "domain_count": len(node_domains),
+            "model": "bio-inspired frontier civilization",
+        }
+
+    def run_simulation(self) -> dict:
+        """Run an ML-driven simulation pass over the civilization's current state."""
+        result = self.simulation.simulate(self)
+        return {
+            "scenario": result.scenario,
+            "ensemble_score": result.ensemble_score,
+            "model_predictions": result.model_predictions,
+            "metrics": result.metrics,
+        }
+
     def status(self) -> dict:
         stats = self._compute_stats([])
         stats["recent_events"] = self.event_log[-10:]
         stats["stats_history"] = self.stats_history[-30:]
+        stats["biological_profile"] = self.biological_profile()
         return stats
 
     def _log(self, event_type: str, msg: str):

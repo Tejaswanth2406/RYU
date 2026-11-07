@@ -158,6 +158,10 @@ class AgentCell:
 
         return result
 
+    def tasks_done_count(self) -> int:
+        """Number of completed reasoning steps for this agent."""
+        return len(self.task_history)
+
     def can_reproduce(self) -> bool:
         return self.alive and self.energy >= self.REPRODUCTION_ENERGY
 

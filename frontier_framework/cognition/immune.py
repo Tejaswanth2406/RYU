@@ -252,11 +252,3 @@ class ImmuneSystem:
         from collections import Counter
         counts = Counter(t.threat_type for t in self.threats)
         return dict(counts)
-
-
-# Patch AgentCell with a helper the immune system needs
-def _tasks_done_count(self):
-    return len(self.task_history)
-
-from frontier_framework.evolution.genome import AgentCell
-AgentCell.tasks_done_count = _tasks_done_count

@@ -185,6 +185,42 @@ adapter = FrontierAdapter(lambda task, spec: chain.invoke(task).content)
 
 ---
 
+## Biological Lifecycle Integration
+
+The frontier framework can now surface a biological lifecycle layer that maps life-like mechanisms
+onto the computational architecture:
+
+```python
+from frontier_framework import Civilization, BiologicalLifecycle
+
+civilization = Civilization(n_nodes=4, node_population_size=12)
+print(civilization.biological_profile()["lifecycle_stages"]["reproduction"])
+print(BiologicalLifecycle().get("immune_response").computational_application)
+```
+
+This connects concepts like cell formation, metabolism, reproduction, homeostasis, and immune
+response to the existing agent/population/civilization model without replacing the core AI
+architecture.
+
+The native simulation engine provides a validated C API and a C++ wrapper. It evolves agent count,
+fitness, risk, memory, emergence, and uptime over simulation steps, and reports a bounded environment
+score. It has no third-party runtime dependencies.
+
+Build and run its native tests with CMake and a C/C++ compiler:
+
+```powershell
+cmake -S frontier_framework/native -B build/native
+cmake --build build/native
+ctest --test-dir build/native --output-on-failure
+```
+
+The C entry points are declared in `frontier_framework/native/simulated_environment.h`. C++ users
+can include `frontier_framework/native/simulated_environment.hpp` and use
+`frontier::SimulatedEnvironment`. The native engine is the deterministic simulation core; the
+Python ML models can consume its resulting state snapshots for forecasting and model comparison.
+
+---
+
 ## Philosophy
 
 > *"Death prevents stagnation. The civilization stays adaptive."*
