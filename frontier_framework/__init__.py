@@ -7,7 +7,12 @@ from .cognition.immune import ImmuneSystem
 from .cognition.knowledge import KnowledgeEcosystem
 from .memory.memory import DistributedMemory
 from .biology.integration import BiologicalLifecycle, BiologicalConcept
-from .simulation import SimulatedEnvironment, SimulationResult
+from .simulation import (
+    FitnessExperiment,
+    FitnessObservation,
+    SimulatedEnvironment,
+    SimulationResult,
+)
 from .agents.integration import FrontierAdapter
 
 __all__ = [
@@ -27,5 +32,7 @@ __all__ = [
     "BiologicalConcept",
     "SimulatedEnvironment",
     "SimulationResult",
+    "FitnessExperiment",
+    "FitnessObservation",
     "FrontierAdapter",
 ]

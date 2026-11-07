@@ -204,6 +204,35 @@ This connects concepts like cell formation, metabolism, reproduction, homeostasi
 response to the existing agent/population/civilization model without replacing the core AI
 architecture.
 
+### First measurable forecast experiment
+
+The initial forecast target is the civilization's average fitness **one tick ahead**. Each successful
+`Civilization.tick()` records the pre-tick state and the actual post-tick average fitness in a
+`FitnessExperiment`. This observation collector is separate from the ML simulation ensemble, so
+synthetic seed labels are not treated as observed outcomes.
+
+To collect multiple independent runs, share one collector across civilizations, then reserve entire
+run IDs for evaluation:
+
+```python
+from frontier_framework import Civilization, FitnessExperiment
+
+experiment = FitnessExperiment()
+for _ in range(3):
+    civilization = Civilization(fitness_experiment=experiment)
+    for _ in range(20):
+        civilization.tick()
+
+held_out_run = experiment.observations[-1].run_id
+report = experiment.evaluate_persistence_baseline([held_out_run])
+print(report["mae"])
+```
+
+The baseline predicts that next-tick average fitness stays equal to current average fitness. The
+report computes MAE only for explicitly held-out complete runs, and requires at least one other
+run to remain separate. This first step records and evaluates the baseline; it does not train a
+forecast model yet.
+
 The native simulation engine provides a validated C API and a C++ wrapper. It evolves agent count,
 fitness, risk, memory, emergence, and uptime over simulation steps, and reports a bounded environment
 score. It has no third-party runtime dependencies.
@@ -220,6 +249,60 @@ The C entry points are declared in `frontier_framework/native/simulated_environm
 can include `frontier_framework/native/simulated_environment.hpp` and use
 `frontier::SimulatedEnvironment`. The native engine is the deterministic simulation core; the
 Python ML models can consume its resulting state snapshots for forecasting and model comparison.
+
+### Neural Cell Brain (C++20)
+
+The native project also contains a modular 19-file neural-cell brain architecture under
+`frontier_framework/native/neural_brain/`. It connects configurable neural cells, weighted graph
+message passing, feature encoding, three-tier memory, predictive models, and an adaptive learning
+controller.
+
+The CPU core implements decision trees, bagged Random Forests, residual Gradient Boosting, and a
+small MLP. XGBoost is an optional callback adapter for an externally supplied backend; it is not
+reimplemented or required to build the core. Graph aggregation supports weighted-mean and
+similarity-attention modes. The learning controller trains on supplied examples and adapts expert weights from observed
+prediction error, inference latency, and ensemble disagreement; it does not fabricate a training
+dataset.
+
+The 19 files are:
+
+- Headers: `types.hpp`, `config.hpp`, `neural_cell.hpp`, `brain_graph.hpp`, `gnn_layer.hpp`,
+  `memory_layer.hpp`, `feature_encoder.hpp`, `tree_models.hpp`, `ensemble.hpp`, and
+  `learning_controller.hpp` in `frontier_framework/native/neural_brain/include/neural_brain/`.
+- Implementations: the corresponding nine `.cpp` files (all headers except `config.hpp`) in
+  `frontier_framework/native/neural_brain/src/`.
+
+The native targets and integration test use the existing CMake project:
+
+```powershell
+cmake -S frontier_framework/native -B build/native
+cmake --build build/native
+ctest --test-dir build/native --output-on-failure
+```
+
+For C++ consumers, add `frontier_framework/native/neural_brain/include` to include paths and
+link the `frontier_neural_brain` CMake target. The central entry point is
+`neural_brain/learning_controller.hpp`; a minimal training/inference flow is:
+
+```cpp
+neural_brain::LearningController brain;
+brain.add_cell(1, "planner");
+brain.add_cell(2, "researcher");
+brain.connect(1, 2, 0.7);
+for (int i = 0; i < 4; ++i) {
+    brain.learn({0.2 * i, 0.8 - 0.2 * i}, 0.1 * i);
+}
+auto result = brain.infer({0.3, 0.7});
+```
+
+An external XGBoost binding can be registered through `brain.ensemble().add_model(...)` using an
+`XGBoostAdapter` with fit/predict callbacks.
+
+The GNN currently performs deterministic CPU message passing rather than gradient-trained
+convolution; the attention mode is a similarity-weighted aggregation. Classification is exposed as
+a binary decision over the regression ensemble output. Multiclass classification, trainable GNN
+weights, persistent on-disk memory, GPU acceleration, and automatic XGBoost discovery are not
+implemented yet.
 
 ---
 

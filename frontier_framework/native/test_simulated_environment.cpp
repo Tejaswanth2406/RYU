@@ -1,10 +1,14 @@
 #include "simulated_environment.h"
 #include "simulated_environment.hpp"
+#include "neural_brain/learning_controller.hpp"
 
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 int main() {
     FrontierSimulationState state = {
@@ -34,7 +38,7 @@ int main() {
 
     frontier::SimulatedEnvironment environment(state);
     const FrontierSimulationStepResult cpp_result = environment.step(2.0);
-    assert(cpp_result.cycle == 1);
+    assert(cpp_result.cycle == state.cycle_count + 1);
     assert(std::abs(environment.score() - cpp_result.score) < 1e-12);
 
     bool rejected_invalid_state = false;
@@ -44,5 +48,52 @@ int main() {
         rejected_invalid_state = true;
     }
     assert(rejected_invalid_state);
+
+    neural_brain::BrainConfig brain_config;
+    brain_config.graph.embedding_size = 4;
+    brain_config.graph.message_passing_steps = 2;
+    brain_config.models.forest_size = 4;
+    brain_config.models.boosting_rounds = 3;
+    brain_config.models.mlp_hidden_size = 4;
+    brain_config.models.mlp_epochs = 5;
+    brain_config.learning.minimum_training_examples = 4;
+    neural_brain::LearningController brain(brain_config);
+    brain.ensemble().add_model(std::make_shared<neural_brain::XGBoostAdapter>(
+        [](const std::vector<neural_brain::TrainingExample>&) {},
+        [](const neural_brain::Vector&) { return 0.4; }
+    ));
+    brain.add_cell(1, "planner");
+    brain.add_cell(2, "researcher");
+    auto divided = brain.graph().cell(1).divide(3);
+    assert(divided.id() == 3);
+    assert(std::abs(divided.energy() - brain.graph().cell(1).energy()) < 1e-12);
+    brain.graph().add_cell(std::move(divided));
+    brain.connect(1, 2, 0.7);
+    brain.connect(2, 1, 0.4);
+    brain.graph().reinforce(1, 2, 0.8, 0.7);
+    brain.connect(1, 3, 0.005);
+    assert(brain.graph().prune() == 1);
+    brain.graph().cell(2).accumulate_damage(0.5);
+    brain.graph().cell(2).repair(1.0);
+    assert(brain.graph().cell(2).damage() < 0.5);
+    for (int i = 0; i < 4; ++i) {
+        const double feature = static_cast<double>(i) / 3.0;
+        brain.learn({feature, 1.0 - feature}, feature * 2.0, "native test");
+    }
+    const auto brain_result = brain.infer({0.25, 0.75});
+    assert(std::isfinite(brain_result.prediction.value));
+    assert(brain_result.prediction.confidence >= 0.0);
+    assert(brain_result.prediction.confidence <= 1.0);
+    assert(brain_result.graph_embedding.size() == 4);
+    assert(brain_result.retrieved_memories > 0);
+    assert(brain.memory().episodic_size() > 0);
+    assert(brain.ensemble().model_names().size() == 5);
+    neural_brain::Experience semantic;
+    semantic.features = brain_result.encoded_features;
+    semantic.outcome = {1.0};
+    semantic.importance = 0.9;
+    brain.remember(std::move(semantic), neural_brain::MemoryKind::semantic);
+    assert(brain.memory().semantic_size() == 1);
+    brain.feedback({0.25, 0.75}, 0.5);
     return 0;
 }
